@@ -1,0 +1,4 @@
+ios-build-01 ansible_host=<ip> ansible_user=<user> ansible_ssh_pass=<password> ansible_become_pass=<password>
+
+[ios-build-servers]
+ios-build-01

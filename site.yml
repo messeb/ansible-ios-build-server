@@ -1,0 +1,12 @@
+---
+
+- hosts: ios-build-servers
+  vars_files:
+    - group_vars/all.yml
+  gather_facts: true
+
+  roles:
+    - roles/common
+    - roles/xcode
+    - roles/homebrew
+    - roles/rvm

@@ -1,0 +1,51 @@
+---
+
+- name: Install macOS updates
+  command: softwareupdate -i -a --restart
+
+- name: Wait for connection after update
+  wait_for_connection:
+    connect_timeout: 30
+    sleep: 30
+    delay: 30
+    timeout: 144000
+
+- name: Disable computer sleep
+  command: systemsetup -setcomputersleep Never
+  become: true
+
+- name: Disable harddisk sleep
+  command: systemsetup -setharddisksleep Never
+  become: true
+
+- name: Disable display sleep
+  command: systemsetup -setdisplaysleep Never
+  become: true
+
+- name: Enable Apple Remote Desktop
+  command: /System/Library/CoreServices/RemoteManagement/ARDAgent.app/Contents/Resources/kickstart -activate -configure -access -on -restart -agent -privs -all
+  become: true
+
+- name: Disable background downloads
+  command: defaults write /Library/Preferences/com.apple.SoftwareUpdate AutomaticDownload -boolean FALSE
+  become: true
+
+- name: Disable auto updates
+  command: defaults write /Library/Preferences/com.apple.commerce AutoUpdate -bool FALSE
+  become: true
+
+- name: Disable auto macOS update
+  command: defaults write /Library/Preferences/com.apple.commerce AutoUpdateRestartRequired -bool FALSE
+  become: true
+
+- name: Disable animation
+  command: defaults write NSGlobalDomain NSAutomaticWindowAnimationsEnabled -bool false
+  become: true
+
+- name: Set Ruby Gems directory rights
+  file:
+    path: "/Library/Ruby/Gems"
+    state: directory
+    recurse: yes
+    owner: "{{ ansible_user }}"
+  become: true

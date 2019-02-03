@@ -1,0 +1,69 @@
+---
+
+- name: Check Xcode installation
+  stat:
+    path: /Applications/Xcode_{{xcode_version}}.app
+  register: xcode_install_status
+
+- name: Set Xcode installation fact
+  set_fact:
+    install_xcode: "{{ not xcode_install_status.stat.exists }}"
+
+- name: Copy Apple Developer portal login script
+  copy:
+    src: files/xcode-download-cookie.rb
+    dest: ~/xcode-download-cookie.rb
+    owner: "{{ ansible_user }}"
+    group: staff
+    mode: 0755
+  when: install_xcode
+
+- name: Query Xcode download cookie
+  command: ruby ~/xcode-download-cookie.rb {{apple_developer_email}} {{apple_developer_password}}
+  when: install_xcode
+  register: xcode_download_cookie_response
+
+- name: Set Xcode download cookie
+  set_fact: 
+    xcode_download_cookie={{ xcode_download_cookie_response.stdout }}
+  when: install_xcode
+
+- name: Download Xcode
+  command: |
+    curl \
+    --cookie "{{xcode_download_cookie}}" \
+    --cookie-jar /tmp/curl-cookies.txt \
+    --retry 3 \
+    --location \
+    --continue-at - \
+    --output ~/Downloads/Xcode_{{xcode_version}}.xip \
+    https://developer.apple.com/devcenter/download.action\?path\=/Developer_Tools/Xcode_{{xcode_version}}/Xcode_{{xcode_version}}.xip
+  when: install_xcode
+
+- name: Unzip Xcode
+  command: xip -x ~/Downloads/Xcode_{{xcode_version}}.xip
+  when: install_xcode
+
+- name: Clean Xcode download artifact
+  file:
+    state: absent
+    path: ~/Downloads/Xcode_{{xcode_version}}.xip
+
+- name: Move Xcode to Applications
+  command: mv ~/Xcode.app /Applications/Xcode_{{xcode_version}}.app
+  when: install_xcode
+
+- name: Switch Xcode select to new Xcode version
+  command: xcode-select -s /Applications/Xcode_{{xcode_version}}.app
+  become: yes
+  when: install_xcode
+
+- name: Accept Xcode license
+  command: xcodebuild -license accept
+  become: yes
+  when: install_xcode
+
+- name: Xcode first launch simulation
+  command: xcodebuild -runFirstLaunch
+  become: yes
+  when: install_xcode

@@ -1,0 +1,7 @@
+---
+
+include: ios-build-servers.yml
+
+ansible_connection: ssh
+ansible_ssh_pipelining: true
+host_key_checking: false

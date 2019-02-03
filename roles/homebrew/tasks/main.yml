@@ -1,0 +1,26 @@
+---
+
+- name: Check Homebrew installation
+  stat:
+    path: /usr/local/Homebrew
+  register: homebrew_install_status
+
+- name: Set Homebrew installation fact
+  set_fact:
+    install_homebrew: "{{ not homebrew_install_status.stat.exists }}"
+
+- name: Add user to sudoers for Homebrew installation
+  lineinfile:
+    path: /etc/sudoers
+    line: "{{ ansible_user }} ALL=(ALL) NOPASSWD: ALL"
+    create: yes
+  become: true
+  when: install_homebrew
+
+- name: Install Homebrew
+  command: bash -c "\curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install | ruby"
+  when: install_homebrew
+
+- name: Update Homebrew
+  command: /usr/local/bin/brew update
+  when: not install_homebrew

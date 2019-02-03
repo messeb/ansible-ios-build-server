@@ -1,0 +1,49 @@
+---
+
+- name: Check RVM installation
+  stat:
+    path: ~/.rvm/bin/rvm
+  register: rvm_install_status
+
+- name: Set RVM installation fact
+  set_fact:
+    install_rvm: "{{ not rvm_install_status.stat.exists }}"
+
+- name: Install RVM for the user
+  command: bash -c "\curl -sSL https://get.rvm.io | bash -s -- --ignore-dotfiles"
+  when: install_rvm
+
+- name: Update RVM
+  command: ~/.rvm/bin/rvm get stable
+  when: not install_rvm
+
+- name: Add RVM to $PATH
+  lineinfile:
+    path: ~/.profile
+    regexp: 'rvm_path$'
+    line: 'export PATH="$PATH:$HOME/.rvm/bin" # rvm_path'
+    create: yes
+
+- name: Sourcing RVM
+  lineinfile:
+    path: ~/.profile
+    regexp: 'rvm_sourcing$'
+    line: '[[ -s "$HOME/.rvm/scripts/rvm" ]] && source "$HOME/.rvm/scripts/rvm" # rvm_sourcing'
+    create: yes
+
+- name: Sourcing RVM
+  lineinfile:
+    path: ~/.bash_profile
+    regexp: 'profile_load$'
+    line: '[[ -s "$HOME/.profile" ]] && source "$HOME/.profile" # profile_load'
+    create: yes
+
+- name: Sourcing RVM
+  lineinfile:
+    path: ~/.bashrc 
+    regexp: 'profile_load$'
+    line: '[[ -s "$HOME/.profile" ]] && source "$HOME/.profile" # profile_load'
+    create: yes
+
+- name: Install Ruby version
+  command: ~/.rvm/bin/rvm install ruby-{{ruby_version}}
